@@ -14,6 +14,7 @@ object Extraction {
     * @return A sequence containing triplets (date, location, temperature)
     */
   def locateTemperatures(year: Int, stationsFile: String, temperaturesFile: String): Iterable[(LocalDate, Location, Double)] = {
+    val year = temperaturesFile.substring(1, 5).toInt
     ???
   }
 
