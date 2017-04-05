@@ -3,7 +3,7 @@ package observatory
 import java.io._
 import java.time.{LocalDate, Month}
 
-import monix.reactive.{Consumer, Observable}
+import monix.reactive.Observable
 import monix.execution.Scheduler.Implicits.global
 
 import scala.concurrent.Await
@@ -41,6 +41,8 @@ object Extraction {
       ((tmp(0), tmp(1)),(toDoubleDefault(tmp(2), 0), toDoubleDefault(tmp(3), 0)))
     }.toListL.runAsync, 1.minute).toMap
 
+    def fahrenheitToCelsius(fahrenheit: Temperature): Temperature = (fahrenheit-32)/1.8
+
     val r = Await.result(temperaturesObservable.map { temperaturesLine =>
       val tmpA = temperaturesLine.split(",")
       (tmpA(0), tmpA(1), tmpA(2).toInt, tmpA(3).toInt, tmpA(4).toDouble)
@@ -49,7 +51,7 @@ object Extraction {
       val (stn, wban, month, day, temperature) = tuple
       val tmpB = stationsMap((stn, wban))
       val (lat, lon) = (tmpB._1, tmpB._2)
-      (LocalDate.of(year, Month.of(month), day), Location(lat, lon), temperature)
+      (LocalDate.of(year, Month.of(month), day), Location(lat, lon), fahrenheitToCelsius(temperature))
     }.toListL.runAsync, 5.minutes)
 
     stationsFileHandle.close()
