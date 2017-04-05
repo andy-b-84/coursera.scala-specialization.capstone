@@ -15,11 +15,6 @@ import scala.util.Try
   * 1st milestone: data extraction
   */
 object Extraction {
-  private def filenameToObservableAndHanlde(filename: String): (Observable[String], InputStream) = {
-    val inputStream = Extraction.getClass.getResourceAsStream(filename)
-    (Observable.fromLinesReader(new BufferedReader(new InputStreamReader(inputStream, "ASCII"))), inputStream)
-  }
-
   /**
     * @param year             Year number
     * @param stationsFile     Path of the stations resource file to use (e.g. "/stations.csv")
@@ -27,11 +22,18 @@ object Extraction {
     * @return A sequence containing triplets (date, location, temperature)
     */
   def locateTemperatures(year: ObsYear, stationsFile: String, temperaturesFile: String): Iterable[(LocalDate, Location, Temperature)] = {
-    val (temperaturesObservable, temperaturesFileHandle) = filenameToObservableAndHanlde(temperaturesFile)
+    def filenameToObservableAndHanlde(filename: String): (Observable[String], InputStream) = {
+      val inputStream = Extraction.getClass.getResourceAsStream(filename)
+      (Observable.fromLinesReader(new BufferedReader(new InputStreamReader(inputStream, "ASCII"))), inputStream)
+    }
 
     def toDoubleDefault(s: String, default: Double): Double = {
       Try(s.toDouble).toOption.getOrElse(default)
     }
+
+    def fahrenheitToCelsius(fahrenheit: Temperature): Temperature = (fahrenheit-32)/1.8
+
+    val (temperaturesObservable, temperaturesFileHandle) = filenameToObservableAndHanlde(temperaturesFile)
 
     val (stationsObservable, stationsFileHandle) = filenameToObservableAndHanlde(stationsFile)
 
@@ -41,8 +43,6 @@ object Extraction {
       val tmp = line.split(",", 4)
       ((tmp(0), tmp(1)),(toDoubleDefault(tmp(2), 0), toDoubleDefault(tmp(3), 0)))
     }.toListL.runAsync, 1.minute).toMap
-
-    def fahrenheitToCelsius(fahrenheit: Temperature): Temperature = (fahrenheit-32)/1.8
 
     val r = Await.result(temperaturesObservable.map { temperaturesLine =>
       val tmpA = temperaturesLine.split(",")
