@@ -6,9 +6,9 @@ import org.scalatest.junit.JUnitRunner
 
 @RunWith(classOf[JUnitRunner])
 class ExtractionTest extends FunSuite {
-  test("locateTemperatures works") {
-    val located1975 = Extraction.locateTemperatures(1975, "/stations.csv", "/1975.csv")
+  private val located1975 = Extraction.locateTemperatures(1975, "/stations.csv", "/1975.csv")
 
+  test("locateTemperatures works") {
     //located1975.take(10).foreach{t => println(t)}
 
     val tuple = located1975.head
@@ -18,15 +18,12 @@ class ExtractionTest extends FunSuite {
     assert(tuple._3 == -4.888888888888889)
   }
 
-  /*[Test Description] [#1 - Data extraction] compute yearly average by location
-[Observed Error] an implementation is missing
-[exception was thrown] detailed error message in debug output section below
-[Lost Points] 5
+  test("locationYearlyAverageRecords works") {
+    val meaned1975 = Extraction.locationYearlyAverageRecords(located1975)
 
-[Test Description] [#1 - Data extraction] locationYearlyAverageRecords should be able to process 1 million records
-[Observed Error] an implementation is missing
-[Lost Points] 5
+    //meaned1975.take(10).foreach{t => println(t)}
 
-*/
+    assert(meaned1975.head.toString == "(Location(67.55,-63.783),-6.6544511378848865)")
+  }
   
 }
