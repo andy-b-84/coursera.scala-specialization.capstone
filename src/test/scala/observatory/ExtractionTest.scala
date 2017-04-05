@@ -23,7 +23,8 @@ class ExtractionTest extends FunSuite {
 
     //meaned1975.take(10).foreach{t => println(t)}
 
-    assert(meaned1975.head.toString == "(Location(67.55,-63.783),-6.6544511378848865)")
+    assert(meaned1975.head._1.toString == "Location(67.55,-63.783)")
+    assert(meaned1975.head._2.round == -6.6544511378848865.round)
   }
   
 }

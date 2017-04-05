@@ -11,6 +11,8 @@ package object observatory {
 
   type Temperature = Double
 
+  type Size = Long
+
   type Stn = String
   type Wban = String
 }

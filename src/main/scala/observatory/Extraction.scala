@@ -66,15 +66,18 @@ object Extraction {
     * @return A sequence containing, for each location, the average temperature over the year.
     */
   def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Temperature)]): Iterable[(Location, Temperature)] = {
-    Await.result(Observable.fromIterable(records).foldLeftL(Map[Location, List[Temperature]]()){ (acc, currentTuple) =>
+    Await.result(Observable.fromIterable(records).foldLeftL(Map[Location, (Temperature, Size)]()){ (acc, currentTuple) =>
       if (acc.isDefinedAt(currentTuple._2)) {
-        val newValue = currentTuple._3 :: acc(currentTuple._2)
-        acc.updated(currentTuple._2, newValue)
+        val newTemperature = currentTuple._3 + acc(currentTuple._2)._1
+        val newSize = acc(currentTuple._2)._2 + 1
+        acc.updated(currentTuple._2, (newTemperature, newSize))
       } else {
-        acc + (currentTuple._2 -> List(currentTuple._3))
+        val newTuple = (currentTuple._2, (currentTuple._3, 1.toLong))
+        acc + newTuple
       }
     }.map{taskMap => taskMap.map { tuple =>
-      tuple._1 -> tuple._2.sum/tuple._2.length
+      val temperatureTuple = tuple._2
+      (tuple._1, temperatureTuple._1 / temperatureTuple._2)
     }}.runAsync, 5.minutes)
   }
 
