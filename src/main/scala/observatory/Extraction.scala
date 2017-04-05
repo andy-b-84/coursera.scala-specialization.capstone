@@ -3,6 +3,7 @@ package observatory
 import java.io._
 import java.time.{LocalDate, Month}
 
+import monix.eval.Task
 import monix.reactive.Observable
 import monix.execution.Scheduler.Implicits.global
 
@@ -64,8 +65,13 @@ object Extraction {
     * @param records A sequence containing triplets (date, location, temperature)
     * @return A sequence containing, for each location, the average temperature over the year.
     */
-  def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Double)]): Iterable[(Location, Double)] = {
-    ???
+  def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Temperature)]): Iterable[(Location, Temperature)] = {
+    Await.result(Observable.fromIterable(records).foldLeftL(Map[Location, List[Temperature]]()){ (acc, currentTuple) =>
+      val newValue = acc(currentTuple._2)
+      acc.updated(currentTuple._2, newValue)
+    }.map{taskMap => taskMap.map { tuple =>
+      tuple._1 -> tuple._2.sum/tuple._2.length
+    }}.runAsync, 5.minutes)
   }
 
 }
