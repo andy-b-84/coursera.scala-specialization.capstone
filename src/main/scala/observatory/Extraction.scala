@@ -34,7 +34,9 @@ object Extraction {
 
     val (stationsObservable, stationsFileHandle) = filenameToObservableAndHanlde(stationsFile)
 
-    val stationsMap: Map[(Stn, Wban), (Latitude, Longitude)] = Await.result(stationsObservable.map{ line =>
+    val stationsMap: Map[(Stn, Wban), (Latitude, Longitude)] = Await.result(stationsObservable.filter{ line =>
+      line.takeRight(2) != ",,"
+    }.map{ line =>
       val tmp = line.split(",", 4)
       ((tmp(0), tmp(1)),(toDoubleDefault(tmp(2), 0), toDoubleDefault(tmp(3), 0)))
     }.toListL.runAsync, 1.minute).toMap
