@@ -3,7 +3,6 @@ package observatory
 import java.io._
 import java.time.{LocalDate, Month}
 
-import monix.eval.Task
 import monix.reactive.Observable
 import monix.execution.Scheduler.Implicits.global
 

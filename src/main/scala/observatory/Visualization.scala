@@ -1,6 +1,10 @@
 package observatory
 
 import com.sksamuel.scrimage.{Image, Pixel}
+import monix.reactive.Observable
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import monix.execution.Scheduler.Implicits.global
 
 /**
   * 2nd milestone: basic visualization
@@ -51,17 +55,37 @@ object Visualization {
     * @return The color that corresponds to `value`, according to the color scale defined by `points`
     */
   def interpolateColor(points: Iterable[(Double, Color)], value: Double): Color = {
-    val scale = Map(
-      60  -> Color(255, 255, 255),
-      32  -> Color(255, 0,   0),
-      12  -> Color(255, 255, 0),
-      0   -> Color(0,   255, 255),
-      -15 -> Color(0,   0,   255),
-      -27 -> Color(255, 0,   255),
-      -50 -> Color(33,  0,   107),
-      -60 -> Color(0,   0,   0)
-    )
-    ???
+    val pointsMap = points.toMap
+    if (pointsMap.isDefinedAt(value)) pointsMap(value)
+    else {
+      def interpolateChannel(cMin: Int, cMax: Int, delta: Double): Int = (cMin + ((cMax-cMin) * delta)).toInt
+
+      def interpolate(min:(Double, Color), max:(Double, Color)): Color = {
+        val delta = (value - min._1) / (max._1 - min._1)
+        Color(
+          interpolateChannel(min._2.red, max._2.red, delta),
+          interpolateChannel(min._2.green, max._2.green, delta),
+          interpolateChannel(min._2.blue, max._2.blue, delta)
+        )
+      }
+
+      val n: Option[(Double, Color)] = None
+
+      Await.result(Observable.fromIterable(points).foldLeftL((n, n)) { (acc, pair) =>
+        if ((pair._1 < value) && (acc._1.isEmpty || (value - acc._1.get._1 > value - pair._1))) {
+          acc.copy(Some(pair), acc._2)
+        } else if ((pair._1 > value) && (acc._2.isEmpty || (value - acc._2.get._1 > value - pair._1))) {
+          acc.copy(acc._1, Some(pair))
+        } else {
+          acc
+        }
+      }.runAsync, 5.seconds) match {
+        case (Some(min), None) => min._2
+        case (None, Some(max)) => max._2
+        case (Some(min), Some(max)) => interpolate(min, max)
+        case _ => throw new Error("shouldn't get that")
+      }
+    }
   }
 
   /**
@@ -70,7 +94,23 @@ object Visualization {
     * @return A 360×180 image where each pixel shows the predicted temperature at its location
     */
   def visualize(temperatures: Iterable[(Location, Double)], colors: Iterable[(Double, Color)]): Image = {
-    ???
+    val colorsA = Await.result(Observable.fromIterable(Seq.range(0, 64799)).map { arrayIndex =>
+      val x = arrayIndex % 360
+      val y = (arrayIndex - x) / 360
+
+      val lon = x - 180
+      val lat = 90 - y
+
+      val temperature = predictTemperature(temperatures, Location(lat, lon))
+      val color = interpolateColor(colors, temperature)
+
+      val pixel = Pixel(color.red, color.green, color.blue, 1)
+
+      arrayIndex -> pixel
+    }.toListL.runAsync, 10.minutes).sortBy(_._1).toMap.values.toArray
+
+
+    Image(360, 180, colorsA)
   }
 
 }
