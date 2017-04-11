@@ -18,6 +18,7 @@ object Visualization {
     */
   def predictTemperature(temperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
     val distancePower = 2
+    val temperatureRectifier = 300 //"almost" Kelvin : cannot afford to have a 0 somewhere
 
     def greatCircleDistanceAngle(location1: Location, location2: Location): Angle = {
       val phi1 = Math.toRadians(location1.lat)
@@ -39,13 +40,9 @@ object Visualization {
     val temperaturesMap = temperatures.toMap
     if (temperaturesMap.isDefinedAt(location)) temperaturesMap(location)
     else {
-      val filteredSet = temperaturesMap.map{tuple =>
-        greatCircleDistanceAngle(location, tuple._1) -> tuple._2
-      }.filter{tuple =>
-        Math.abs(tuple._1) < Math.PI/4
-      }
-      filteredSet.aggregate(0:Temperature)((acc, tuple) => acc + (tuple._2/Math.pow(tuple._1, distancePower)), _+_) /
-        filteredSet.aggregate(0:Temperature)((acc, tuple) => acc + 1/tuple._1, _+_)
+      val set = temperaturesMap.map{ tuple => greatCircleDistanceAngle(location, tuple._1) -> (tuple._2+temperatureRectifier) }
+      (set.aggregate(0:Temperature)((acc, tuple) => {acc + (tuple._2/Math.pow(tuple._1, distancePower))}, _+_) /
+        set.aggregate(0:Temperature)((acc, tuple) => {acc + 1/Math.pow(tuple._1, distancePower)}, _+_)) - temperatureRectifier
     }
   }
 
