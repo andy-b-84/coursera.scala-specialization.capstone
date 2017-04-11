@@ -59,7 +59,7 @@ object Visualization {
     if (pointsMap.isDefinedAt(value)) pointsMap(value)
     else {
       def interpolateChannel(cMin: Channel, cMax: Channel, delta: Double): Channel =
-        Math.ceil(cMin + ((cMax-cMin) * delta)).toInt
+        cMin + Math.round((cMax-cMin) * delta).toInt
 
       def interpolate(min:(Temperature, Color), max:(Temperature, Color)): Color = {
         val delta = (value - min._1) / (max._1 - min._1)

@@ -19,25 +19,20 @@ class VisualizationTest extends FunSuite with Checkers {
   }
 
   test("[#2 - Raw data display] basic color interpolation") {
-    val c = Visualization.interpolateColor(scale, 39.3448851)
+    val c = Visualization.interpolateColor(scale, 39.34488518709797)
     assert(c == Color(128,0,128))
   }
 
-/*
-[Test Description] [#2 - Raw data display] color interpolation
-[Observed Error] GeneratorDrivenPropertyCheckFailedException was thrown during property evaluation.
- (VisualizationTest.scala:65)
-  Falsified after 0 successful property evaluations.
-  Location: (VisualizationTest.scala:65)
-  Occurred when passed generated values (
-    arg0 = -2147483648,
-    arg1 = 2147483647,
-    arg2 = false
-  )
-  Label of failing property:
-    Incorrect predicted color: Color(191,0,63). Expected: Color(191,0,64) (scale = List((-2.147483648E9,Color(255,0,0)), (2.147483647E9,Color(0,0,255))), value = -1.07374182425E9)
-[Lost Points] 5
+  test("[#2 - Raw data display] color interpolation") {
+    val localScale:Map[Double, Color] = Map(
+      -2.147483648E9 -> Color(255,0,0),
+      2.147483647E9  -> Color(0,0,255)
+    )
+    val c = Visualization.interpolateColor(localScale, -1.07374182425E9)
+    assert(c == Color(191,0,64))
+  }
 
+/*
 [Test Description] [#2 - Raw data display] visualize
 [Observed Error] ExecutionException was thrown during property evaluation.
   Message: Boxed Error
