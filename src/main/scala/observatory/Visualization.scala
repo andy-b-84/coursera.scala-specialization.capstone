@@ -16,10 +16,10 @@ object Visualization {
     * @param location Location where to predict the temperature
     * @return The predicted temperature at `location`
     */
-  def predictTemperature(temperatures: Iterable[(Location, Double)], location: Location): Double = {
+  def predictTemperature(temperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
     val distancePower = 2
 
-    def greatCircleDistanceAngle(location1: Location, location2: Location): Double = {
+    def greatCircleDistanceAngle(location1: Location, location2: Location): Angle = {
       val phi1 = Math.toRadians(location1.lat)
       val lambda1 = Math.toRadians(location1.lon)
       val phi2 = Math.toRadians(location2.lat)
@@ -44,8 +44,8 @@ object Visualization {
       }.filter{tuple =>
         Math.abs(tuple._1) < Math.PI/4
       }
-      filteredSet.aggregate(0:Double)((acc, tuple) => acc + (tuple._2/Math.pow(tuple._1, distancePower)), _+_) /
-        filteredSet.aggregate(0:Double)((acc, tuple) => acc + 1/tuple._1, _+_)
+      filteredSet.aggregate(0:Temperature)((acc, tuple) => acc + (tuple._2/Math.pow(tuple._1, distancePower)), _+_) /
+        filteredSet.aggregate(0:Temperature)((acc, tuple) => acc + 1/tuple._1, _+_)
     }
   }
 
@@ -54,13 +54,14 @@ object Visualization {
     * @param value The value to interpolate
     * @return The color that corresponds to `value`, according to the color scale defined by `points`
     */
-  def interpolateColor(points: Iterable[(Double, Color)], value: Double): Color = {
+  def interpolateColor(points: Iterable[(Temperature, Color)], value: Temperature): Color = {
     val pointsMap = points.toMap
     if (pointsMap.isDefinedAt(value)) pointsMap(value)
     else {
-      def interpolateChannel(cMin: Int, cMax: Int, delta: Double): Int = (cMin + ((cMax-cMin) * delta)).toInt
+      def interpolateChannel(cMin: Channel, cMax: Channel, delta: Double): Channel =
+        (cMin + ((cMax-cMin) * delta)).toInt
 
-      def interpolate(min:(Double, Color), max:(Double, Color)): Color = {
+      def interpolate(min:(Temperature, Color), max:(Temperature, Color)): Color = {
         val delta = (value - min._1) / (max._1 - min._1)
         Color(
           interpolateChannel(min._2.red, max._2.red, delta),
@@ -69,17 +70,19 @@ object Visualization {
         )
       }
 
-      val n: Option[(Double, Color)] = None
+      val n: Option[(Temperature, Color)] = None
 
-      Await.result(Observable.fromIterable(points).foldLeftL((n, n)) { (acc, pair) =>
-        if ((pair._1 < value) && (acc._1.isEmpty || (value - acc._1.get._1 > value - pair._1))) {
+      val a = Await.result(Observable.fromIterable(points).foldLeftL((n, n)) { (acc, pair) =>
+        if ((pair._1 > value) && (acc._1.isEmpty || (acc._1.get._1 - value > pair._1 - value))) {
           acc.copy(Some(pair), acc._2)
-        } else if ((pair._1 > value) && (acc._2.isEmpty || (value - acc._2.get._1 > value - pair._1))) {
+        } else if ((pair._1 < value) && (acc._2.isEmpty || (value - acc._2.get._1 > value - pair._1))) {
           acc.copy(acc._1, Some(pair))
         } else {
           acc
         }
-      }.runAsync, 5.seconds) match {
+      }.runAsync, 5.seconds)
+      println(a)
+      a match {
         case (Some(min), None) => min._2
         case (None, Some(max)) => max._2
         case (Some(min), Some(max)) => interpolate(min, max)
@@ -93,7 +96,7 @@ object Visualization {
     * @param colors Color scale
     * @return A 360×180 image where each pixel shows the predicted temperature at its location
     */
-  def visualize(temperatures: Iterable[(Location, Double)], colors: Iterable[(Double, Color)]): Image = {
+  def visualize(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)]): Image = {
     val colorsA = Await.result(Observable.fromIterable(Seq.range(0, 64799)).map { arrayIndex =>
       val x = arrayIndex % 360
       val y = (arrayIndex - x) / 360

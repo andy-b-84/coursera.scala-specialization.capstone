@@ -6,10 +6,13 @@ package object observatory {
   type ObsMonth = Int
   type ObsDay = Int
 
+  type Channel = Int
+
   type Latitude = Double
   type Longitude = Double
 
   type Temperature = Double
+  type Angle = Double
 
   type Size = Long
 

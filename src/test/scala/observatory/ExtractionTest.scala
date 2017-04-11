@@ -8,7 +8,7 @@ import org.scalatest.junit.JUnitRunner
 class ExtractionTest extends FunSuite {
   private val located1975 = Extraction.locateTemperatures(1975, "/stations.csv", "/1975.csv")
 
-  test("locateTemperatures works") {
+  test("[#1 - Data extraction] locateTemperatures works") {
     //located1975.take(10).foreach{t => println(t)}
 
     val tuple = located1975.head
@@ -18,7 +18,7 @@ class ExtractionTest extends FunSuite {
     assert(tuple._3 == -4.888888888888889)
   }
 
-  test("locationYearlyAverageRecords works") {
+  test("[#1 - Data extraction] locationYearlyAverageRecords works") {
     val meaned1975 = Extraction.locationYearlyAverageRecords(located1975)
 
     //meaned1975.take(10).foreach{t => println(t)}
