@@ -15,27 +15,15 @@ class VisualizationTest extends FunSuite with Checkers {
   test("[#2 - Raw data display] exceeding the greatest value of a color scale should return the color associated with the greatest value") {
     val c = Visualization.interpolateColor(scale, -9)
 
-    assert(c == Color(255,0,0), s"Incorrect predicted color: $c. Expected: "+Color(255,0,0))
+    assert(c == Color(255,0,0), s"Incorrect predicted color: $c. Expected: Color(255,0,0)")
+  }
+
+  test("[#2 - Raw data display] basic color interpolation") {
+    val c = Visualization.interpolateColor(scale, 39.3448851)
+    assert(c == Color(128,0,128))
   }
 
 /*
-[Test Description] [#2 - Raw data display] exceeding the greatest value of a color scale should return the color associated with the greatest value
-[Observed Error] GeneratorDrivenPropertyCheckFailedException was thrown during property evaluation.
- (VisualizationTest.scala:35)
-  Falsified after 0 successful property evaluations.
-  Location: (VisualizationTest.scala:35)
-  Occurred when passed generated values (
-    arg0 = 77.68977037419594,
-    arg1 = 1.0
-  )
-  Label of failing property:
-    Incorrect predicted color: Color(0,0,255). Expected: Color(255,0,0) (scale = List((1.0,Color(255,0,0)), (77.68977037419594,Color(0,0,255))), value = -9.0)
-[Lost Points] 2
-
-[Test Description] [#2 - Raw data display] basic color interpolation
-[Observed Error] Color(191,63,0) did not equal Color(128,0,128)
-[Lost Points] 1
-
 [Test Description] [#2 - Raw data display] color interpolation
 [Observed Error] GeneratorDrivenPropertyCheckFailedException was thrown during property evaluation.
  (VisualizationTest.scala:65)

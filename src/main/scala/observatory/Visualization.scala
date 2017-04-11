@@ -59,7 +59,7 @@ object Visualization {
     if (pointsMap.isDefinedAt(value)) pointsMap(value)
     else {
       def interpolateChannel(cMin: Channel, cMax: Channel, delta: Double): Channel =
-        (cMin + ((cMax-cMin) * delta)).toInt
+        Math.ceil(cMin + ((cMax-cMin) * delta)).toInt
 
       def interpolate(min:(Temperature, Color), max:(Temperature, Color)): Color = {
         val delta = (value - min._1) / (max._1 - min._1)
@@ -72,7 +72,7 @@ object Visualization {
 
       val n: Option[(Temperature, Color)] = None
 
-      val a = Await.result(Observable.fromIterable(points).foldLeftL((n, n)) { (acc, pair) =>
+      Await.result(Observable.fromIterable(points).foldLeftL((n, n)) { (acc, pair) =>
         if ((pair._1 > value) && (acc._1.isEmpty || (acc._1.get._1 - value > pair._1 - value))) {
           acc.copy(Some(pair), acc._2)
         } else if ((pair._1 < value) && (acc._2.isEmpty || (value - acc._2.get._1 > value - pair._1))) {
@@ -80,9 +80,7 @@ object Visualization {
         } else {
           acc
         }
-      }.runAsync, 5.seconds)
-      println(a)
-      a match {
+      }.runAsync, 5.seconds) match {
         case (Some(min), None) => min._2
         case (None, Some(max)) => max._2
         case (Some(min), Some(max)) => interpolate(min, max)
