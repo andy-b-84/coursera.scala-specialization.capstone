@@ -40,9 +40,12 @@ object Visualization {
     val temperaturesMap = temperatures.toMap
     if (temperaturesMap.isDefinedAt(location)) temperaturesMap(location)
     else {
-      val set = temperaturesMap.map{ tuple => greatCircleDistanceAngle(location, tuple._1) -> (tuple._2+temperatureRectifier) }
-      (set.aggregate(0:Temperature)((acc, tuple) => {acc + (tuple._2/Math.pow(tuple._1, distancePower))}, _+_) /
-        set.aggregate(0:Temperature)((acc, tuple) => {acc + 1/Math.pow(tuple._1, distancePower)}, _+_)) - temperatureRectifier
+      val set = temperaturesMap.map{ tuple => (tuple._1, (greatCircleDistanceAngle(location, tuple._1), tuple._2+temperatureRectifier)) }
+      (set.aggregate(0:Temperature)((acc, tuple) => {
+        val secondTuple = tuple._2
+        acc + (secondTuple._2/Math.pow(secondTuple._1, distancePower))
+      }, _+_) /
+        set.aggregate(0:Temperature)((acc, tuple) => {acc + 1/Math.pow(tuple._2._1, distancePower)}, _+_)) - temperatureRectifier
     }
   }
 
@@ -92,7 +95,7 @@ object Visualization {
     * @return A 360×180 image where each pixel shows the predicted temperature at its location
     */
   def visualize(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)]): Image = {
-    val colorsA = Await.result(Observable.fromIterable(Seq.range(0, 64799)).map { arrayIndex =>
+    val colorsA = Await.result(Observable.range(0,64500).map { arrayIndex =>
       val x = arrayIndex % 360
       val y = (arrayIndex - x) / 360
 
@@ -102,10 +105,10 @@ object Visualization {
       val temperature = predictTemperature(temperatures, Location(lat, lon))
       val color = interpolateColor(colors, temperature)
 
-      val pixel = Pixel(color.red, color.green, color.blue, 0)
+      val pixel = Pixel(color.red, color.green, color.blue, 255)
 
       arrayIndex -> pixel
-    }.toListL.runAsync, 10.minutes).sortBy(_._1).toMap.values.toArray
+    }.toListL.runAsync, 30.minutes).sortBy(_._1).toMap.values.toArray
 
     Image(360, 180, colorsA)
   }

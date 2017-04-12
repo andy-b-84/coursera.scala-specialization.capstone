@@ -43,8 +43,13 @@ class VisualizationTest extends FunSuite with Checkers {
     val predictedTemperature2 = predictTemperature(distrib, Location(45,20))
     val predictedTemperature3 = predictTemperature(distrib, Location(45,30))
 
+    println(s"predictedTemperature1 = $predictedTemperature1")
+    println(s"predictedTemperature2 = $predictedTemperature2")
+    println(s"predictedTemperature3 = $predictedTemperature3")
+
     assert(predictedTemperature1 < 10)
-    assert(Math.round(predictedTemperature2) == 20)
+    assert(predictedTemperature2 > 19)
+    assert(predictedTemperature2 < 21)
     assert(predictedTemperature3 > 30)
   }
 
@@ -67,6 +72,18 @@ class VisualizationTest extends FunSuite with Checkers {
   )
 [Lost Points] 5
 
+[Test Description] [#2 - Raw data display] visualize
+[Observed Error] GeneratorDrivenPropertyCheckFailedException was thrown during property evaluation.
+ (VisualizationTest.scala:136)
+  Falsified after 0 successful property evaluations.
+  Location: (VisualizationTest.scala:136)
+  Occurred when passed generated values (
+    arg0 = 14.013358656832835,
+    arg1 = -100.0
+  )
+  Label of failing property:
+    Incorrect computed color at Location(90.0,-180.0): Color(23,0,232). Expected to be closer to Color(255,0,0) than Color(0,0,255)
+[Lost Points] 5
 */
 
 }
