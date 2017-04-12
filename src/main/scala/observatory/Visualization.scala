@@ -2,9 +2,12 @@ package observatory
 
 import com.sksamuel.scrimage.{Image, Pixel}
 import monix.reactive.Observable
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import monix.execution.Scheduler.Implicits.global
+
+import scala.util.Try
 
 /**
   * 2nd milestone: basic visualization
@@ -95,7 +98,19 @@ object Visualization {
     * @return A 360×180 image where each pixel shows the predicted temperature at its location
     */
   def visualize(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)]): Image = {
-    val colorsA = Await.result(Observable.range(0,64500).map { arrayIndex =>
+    val cores = Try(Runtime.getRuntime.availableProcessors).toOption.getOrElse(1) match {
+      case x if x > 1 => x
+      case _ => 1
+    }
+
+    val step: Int = 64500/cores
+
+    val obs = for {
+      core <- Observable.range(0, cores)
+      low = core * step
+      high = Math.min((core + 1) * step, 64500)
+      arrayIndex <- Observable.range(low, high)
+    } yield {
       val x = arrayIndex % 360
       val y = (arrayIndex - x) / 360
 
@@ -108,7 +123,9 @@ object Visualization {
       val pixel = Pixel(color.red, color.green, color.blue, 255)
 
       arrayIndex -> pixel
-    }.toListL.runAsync, 30.minutes).sortBy(_._1).toMap.values.toArray
+    }
+
+    val colorsA = Await.result(obs.toListL.runAsync, 30.minutes).sortBy(_._1).toMap.values.toArray
 
     Image(360, 180, colorsA)
   }
