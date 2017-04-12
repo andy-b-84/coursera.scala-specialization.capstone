@@ -6,6 +6,7 @@ import monix.reactive.Observable
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import monix.execution.Scheduler.Implicits.global
+import scala.language.postfixOps
 
 import scala.util.Try
 
@@ -83,7 +84,7 @@ object Visualization {
         } else {
           acc
         }
-      }.runAsync, 5.seconds) match {
+      }.runAsync, 1 minute) match {
         case (Some(min), None) => min._2
         case (None, Some(max)) => max._2
         case (Some(min), Some(max)) => interpolate(min, max)
@@ -103,29 +104,28 @@ object Visualization {
       case _ => 1
     }
 
-    val step: Int = 64500/cores
+    val step: Int = Math.ceil((360.0*180)/cores).toInt
 
-    val obs = for {
-      core <- Observable.range(0, cores)
-      low = core * step
-      high = Math.min((core + 1) * step, 64500)
-      arrayIndex <- Observable.range(low, high)
-    } yield {
-      val x = arrayIndex % 360
-      val y = (arrayIndex - x) / 360
+    val obs = Observable.range(0, cores).mergeMap{ core =>
+      val low = core * step
+      val high = Math.min((core + 1) * step, 360*180)
+      Observable.range(low, high).map{ arrayIndex =>
+        val x = arrayIndex % 360
+        val y = (arrayIndex - x) / 360
 
-      val lon = x - 180
-      val lat = 90 - y
+        val lon = x - 180
+        val lat = 90 - y
 
-      val temperature = predictTemperature(temperatures, Location(lat, lon))
-      val color = interpolateColor(colors, temperature)
+        val temperature = predictTemperature(temperatures, Location(lat, lon))
+        val color = interpolateColor(colors, temperature)
 
-      val pixel = Pixel(color.red, color.green, color.blue, 255)
+        val pixel = Pixel(color.red, color.green, color.blue, 255)
 
-      arrayIndex -> pixel
+        arrayIndex -> pixel
+      }
     }
 
-    val colorsA = Await.result(obs.toListL.runAsync, 30.minutes).sortBy(_._1).toMap.values.toArray
+    val colorsA = Await.result(obs.toListL.runAsync, 30 minutes).sortBy(_._1).toMap.values.toArray
 
     Image(360, 180, colorsA)
   }
