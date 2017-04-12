@@ -102,11 +102,10 @@ object Visualization {
       val temperature = predictTemperature(temperatures, Location(lat, lon))
       val color = interpolateColor(colors, temperature)
 
-      val pixel = Pixel(color.red, color.green, color.blue, 1)
+      val pixel = Pixel(color.red, color.green, color.blue, 0)
 
       arrayIndex -> pixel
     }.toListL.runAsync, 10.minutes).sortBy(_._1).toMap.values.toArray
-
 
     Image(360, 180, colorsA)
   }
