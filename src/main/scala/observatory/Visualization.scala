@@ -21,35 +21,38 @@ object Visualization {
     * @return The predicted temperature at `location`
     */
   def predictTemperature(temperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
-    val distancePower = 2
-    val temperatureRectifier = 300 //"almost" Kelvin : cannot afford to have a 0 somewhere
+    val distancePower = 10
 
     def greatCircleDistanceAngle(location1: Location, location2: Location): Angle = {
       val phi1 = Math.toRadians(location1.lat)
       val lambda1 = Math.toRadians(location1.lon)
       val phi2 = Math.toRadians(location2.lat)
       val lambda2 = Math.toRadians(location2.lon)
-      2 * Math.asin(
+
+      val deltaLambda = Math.abs(lambda1 - lambda2)
+
+      Math.atan2(
         Math.sqrt(
-          Math.pow(Math.sin(Math.abs(phi2 - phi1)/2), 2) +
-          (
-            Math.cos(phi1) *
-            Math.cos(phi2) *
-            Math.pow(Math.sin(Math.abs(lambda1 - lambda2)/2), 2)
-          )
-        )
+          Math.pow(Math.cos(phi2) * Math.sin(deltaLambda), 2) +
+          Math.pow(
+            (Math.cos(phi1) * Math.sin(phi2)) -
+            (Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLambda))
+          , 2)
+        ),
+        (Math.sin(phi1) * Math.sin(phi2)) +
+          (Math.cos(phi1) * Math.cos(phi2) * Math.cos(deltaLambda))
       )
     }
 
     val temperaturesMap = temperatures.toMap
     if (temperaturesMap.isDefinedAt(location)) temperaturesMap(location)
     else {
-      val set = temperaturesMap.map{ tuple => (tuple._1, (greatCircleDistanceAngle(location, tuple._1), tuple._2+temperatureRectifier)) }
-      (set.aggregate(0:Temperature)((acc, tuple) => {
+      val set = temperaturesMap.map{ tuple => (tuple._1, (greatCircleDistanceAngle(location, tuple._1), tuple._2)) }
+      set.aggregate(0:Temperature)((acc, tuple) => {
         val secondTuple = tuple._2
         acc + (secondTuple._2/Math.pow(secondTuple._1, distancePower))
       }, _+_) /
-        set.aggregate(0:Temperature)((acc, tuple) => {acc + 1/Math.pow(tuple._2._1, distancePower)}, _+_)) - temperatureRectifier
+        set.aggregate(0:Temperature)((acc, tuple) => {acc + 1/Math.pow(tuple._2._1, distancePower)}, _+_)
     }
   }
 
@@ -76,17 +79,19 @@ object Visualization {
 
       val n: Option[(Temperature, Color)] = None
 
-      Await.result(Observable.fromIterable(points).foldLeftL((n, n)) { (acc, pair) =>
-        if ((pair._1 > value) && (acc._1.isEmpty || (acc._1.get._1 - value > pair._1 - value))) {
-          acc.copy(Some(pair), acc._2)
-        } else if ((pair._1 < value) && (acc._2.isEmpty || (value - acc._2.get._1 > value - pair._1))) {
-          acc.copy(acc._1, Some(pair))
-        } else {
-          acc
-        }
-      }.runAsync, 1 minute) match {
-        case (Some(min), None) => min._2
-        case (None, Some(max)) => max._2
+      val mini = points.foldLeft(n){(acc,point) =>
+        if ((value - point._1 > 0) && (acc.isEmpty || (Math.abs(acc.get._1 - value)>Math.abs(point._1-value))))
+          Some(point)
+        else acc
+      }
+      val maxi = points.foldLeft(n){(acc,point) =>
+        if ((value - point._1 < 0) && (acc.isEmpty || (Math.abs(acc.get._1 - value)>Math.abs(point._1-value))))
+          Some(point)
+        else acc
+      }
+      (mini, maxi) match {
+        case (Some((_, c)), None) => c
+        case (None, Some((_, c))) => c
         case (Some(min), Some(max)) => interpolate(min, max)
         case _ => throw new Error("shouldn't get that")
       }
@@ -125,7 +130,7 @@ object Visualization {
       }
     }
 
-    val colorsA = Await.result(obs.toListL.runAsync, 30 minutes).sortBy(_._1).toMap.values.toArray
+    val colorsA = Await.result(obs.toListL.runAsync, 1 hour).sortBy(_._1).toMap.values.toArray
 
     Image(360, 180, colorsA)
   }

@@ -43,14 +43,37 @@ class VisualizationTest extends FunSuite with Checkers {
     val predictedTemperature2 = predictTemperature(distrib, Location(45,20))
     val predictedTemperature3 = predictTemperature(distrib, Location(45,30))
 
-    println(s"predictedTemperature1 = $predictedTemperature1")
-    println(s"predictedTemperature2 = $predictedTemperature2")
-    println(s"predictedTemperature3 = $predictedTemperature3")
-
     assert(predictedTemperature1 < 10)
     assert(predictedTemperature2 > 19)
     assert(predictedTemperature2 < 21)
     assert(predictedTemperature3 > 30)
+  }
+
+  test("[#2 - Raw data display] visualize") {
+    val distrib = Map(
+      Location(-5,-5) -> -10.0,
+      Location(5,-5) -> 10.0,
+      Location(5,5) -> 20.0,
+      Location(-5,5) -> 30.0
+    )
+
+    val predictedTemperature1 = predictTemperature(distrib, Location(0,-5))
+    val predictedTemperature2 = predictTemperature(distrib, Location(5,0))
+    val predictedTemperature3 = predictTemperature(distrib, Location(0,5))
+    val predictedTemperature4 = predictTemperature(distrib, Location(-5,0))
+    val predictedTemperature5 = predictTemperature(distrib, Location(0,0))
+
+    assert(predictedTemperature1 > -1)
+    assert(predictedTemperature1 < 1)
+    assert(predictedTemperature2 > 14)
+    assert(predictedTemperature2 < 16)
+    assert(predictedTemperature3 > 24)
+    assert(predictedTemperature3 < 26)
+    assert(predictedTemperature4 > 9)
+    assert(predictedTemperature4 < 11)
+    assert(predictedTemperature5 > 7)
+    assert(predictedTemperature5 < 13)
+
   }
 
 /*
