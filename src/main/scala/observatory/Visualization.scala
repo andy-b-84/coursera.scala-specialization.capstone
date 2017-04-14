@@ -1,14 +1,7 @@
 package observatory
 
 import com.sksamuel.scrimage.{Image, Pixel}
-import monix.reactive.Observable
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import monix.execution.Scheduler.Implicits.global
 import scala.language.postfixOps
-
-import scala.util.Try
 
 /**
   * 2nd milestone: basic visualization
@@ -31,32 +24,31 @@ object Visualization {
 
       val deltaLambda = Math.abs(lambda1 - lambda2)
 
-      Math.atan2(
-        Math.sqrt(
-          Math.pow(Math.cos(phi2) * Math.sin(deltaLambda), 2) +
-          Math.pow(
-            (Math.cos(phi1) * Math.sin(phi2)) -
-            (Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLambda))
-          , 2)
-        ),
-        (Math.sin(phi1) * Math.sin(phi2)) +
-          (Math.cos(phi1) * Math.cos(phi2) * Math.cos(deltaLambda))
+      val result = Math.acos(
+        ( Math.sin(phi1) * Math.sin(phi2) ) +
+        ( Math.cos(phi1) * Math.cos(phi2) * Math.cos(deltaLambda) )
       )
+      if (result.isNaN) {
+        //Math.acos has results for angles between -pi and pi, both excluded, thus returns NaN if one tries to calculate
+        // pi or -pi. Thus this result here.
+        Math.PI
+      }
+      else result
     }
 
     val temperaturesMap = temperatures.toMap
-    if (temperaturesMap.isDefinedAt(location)) {
-      val result = temperaturesMap(location)
-      //println(s"found location $location in temperaturesMap : $result°C")
-      result
-    }
+    if (temperaturesMap.isDefinedAt(location)) temperaturesMap(location)
     else {
-      val set = temperaturesMap.map{ tuple => (tuple._1, (greatCircleDistanceAngle(location, tuple._1), tuple._2)) }
-      set.aggregate(0:Temperature)((acc, tuple) => {
+      val set = temperaturesMap.map{ tuple => (tuple._1, (greatCircleDistanceAngle(location, tuple._1)*6371000, tuple._2)) }
+      val result = set.aggregate(0:Temperature)((acc, tuple) => {
         val secondTuple = tuple._2
         acc + (secondTuple._2/Math.pow(secondTuple._1, distancePower))
       }, _+_) /
-        set.aggregate(0:Temperature)((acc, tuple) => {acc + 1/Math.pow(tuple._2._1, distancePower)}, _+_)
+        set.aggregate(0:Temperature)((acc, tuple) => {acc + (1/Math.pow(tuple._2._1, distancePower))}, _+_)
+
+      //println(s"location = $location , result = $result")
+
+      result
     }
   }
 
@@ -81,24 +73,15 @@ object Visualization {
         )
       }
 
-      val n: Option[(Temperature, Color)] = None
+      val result = points.toList.partition(_._1<=value) match {
+        case (Nil, max) => max.head._2
+        case (min, Nil) => min.last._2
+        case (min, max) => interpolate(min.last, max.head)
+      }
 
-      val mini = points.foldLeft(n){(acc,point) =>
-        if ((value - point._1 > 0) && (acc.isEmpty || (Math.abs(acc.get._1 - value)>Math.abs(point._1-value))))
-          Some(point)
-        else acc
-      }
-      val maxi = points.foldLeft(n){(acc,point) =>
-        if ((value - point._1 < 0) && (acc.isEmpty || (Math.abs(acc.get._1 - value)>Math.abs(point._1-value))))
-          Some(point)
-        else acc
-      }
-      (mini, maxi) match {
-        case (Some((_, c)), None) => c
-        case (None, Some((_, c))) => c
-        case (Some(min), Some(max)) => interpolate(min, max)
-        case _ => throw new Error("shouldn't get that")
-      }
+      //println(s"interpolateColor($value) = $result")
+
+      result
     }
   }
 
@@ -108,33 +91,19 @@ object Visualization {
     * @return A 360×180 image where each pixel shows the predicted temperature at its location
     */
   def visualize(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)]): Image = {
-    val cores = Try(Runtime.getRuntime.availableProcessors).toOption.getOrElse(1) match {
-      case x if x > 1 => x
-      case _ => 1
-    }
+    val sortedColors = colors.toList.sortBy(_._1)
 
-    val step: Int = Math.ceil((360.0*180)/cores).toInt
+    val colorsA = Seq.range(0, 360*180).par.map { arrayIndex =>
+      val x = arrayIndex % 360
+      val y = (arrayIndex - x) / 360
 
-    val obs = Observable.range(0, cores).mergeMap{ core =>
-      val low = core * step
-      val high = Math.min((core + 1) * step, 360*180)
-      Observable.range(low, high).map{ arrayIndex =>
-        val x = arrayIndex % 360
-        val y = (arrayIndex - x) / 360
+      val lon = x - 180
+      val lat = 90 - y
 
-        val lon = x - 180
-        val lat = 90 - y
+      val color = interpolateColor(sortedColors, predictTemperature(temperatures, Location(lat.toDouble, lon.toDouble)))
 
-        val temperature = predictTemperature(temperatures, Location(lat.toDouble, lon.toDouble))
-        val color = interpolateColor(colors, temperature)
-
-        val pixel = Pixel(color.red, color.green, color.blue, 255)
-
-        arrayIndex -> pixel
-      }
-    }
-
-    val colorsA = Await.result(obs.toListL.runAsync, 1 hour).sortBy(_._1).toMap.values.toArray
+      Pixel(color.red, color.green, color.blue, 255)
+    }.toArray
 
     Image(360, 180, colorsA)
   }

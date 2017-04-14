@@ -44,7 +44,7 @@ object Extraction {
       //println(s"line = $line , tmp = ${tmp.toString} , result = $result")
       result
     }.toListL.runAsync, 1.minute).toMap
-    stationsMap.foreach(println)
+    //stationsMap.foreach(println)
     //throw new Error
 
     val r = Await.result(temperaturesObservable.map { temperaturesLine =>
@@ -81,7 +81,7 @@ object Extraction {
     }.map{taskMap => taskMap.map { tuple =>
       val loc = tuple._1
       val temperatureTuple = tuple._2
-      (Location(loc.lat.toInt, loc.lon.toInt), temperatureTuple._1 / temperatureTuple._2)
+      (Location(loc.lat, loc.lon), temperatureTuple._1 / temperatureTuple._2)
     }}.runAsync, 5.minutes)
   }
 
