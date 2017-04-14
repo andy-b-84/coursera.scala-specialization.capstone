@@ -45,7 +45,11 @@ object Visualization {
     }
 
     val temperaturesMap = temperatures.toMap
-    if (temperaturesMap.isDefinedAt(location)) temperaturesMap(location)
+    if (temperaturesMap.isDefinedAt(location)) {
+      val result = temperaturesMap(location)
+      //println(s"found location $location in temperaturesMap : $result°C")
+      result
+    }
     else {
       val set = temperaturesMap.map{ tuple => (tuple._1, (greatCircleDistanceAngle(location, tuple._1), tuple._2)) }
       set.aggregate(0:Temperature)((acc, tuple) => {
@@ -121,7 +125,7 @@ object Visualization {
         val lon = x - 180
         val lat = 90 - y
 
-        val temperature = predictTemperature(temperatures, Location(lat, lon))
+        val temperature = predictTemperature(temperatures, Location(lat.toDouble, lon.toDouble))
         val color = interpolateColor(colors, temperature)
 
         val pixel = Pixel(color.red, color.green, color.blue, 255)

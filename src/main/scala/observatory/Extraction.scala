@@ -21,7 +21,7 @@ object Extraction {
     * @return A sequence containing triplets (date, location, temperature)
     */
   def locateTemperatures(year: ObsYear, stationsFile: String, temperaturesFile: String): Iterable[(LocalDate, Location, Temperature)] = {
-    def filenameToObservableAndHanlde(filename: String): (Observable[String], InputStream) = {
+    def filenameToObservableAndHandle(filename: String): (Observable[String], InputStream) = {
       val inputStream = Extraction.getClass.getResourceAsStream(filename)
       (Observable.fromLinesReader(new BufferedReader(new InputStreamReader(inputStream, "ASCII"))), inputStream)
     }
@@ -32,21 +32,25 @@ object Extraction {
 
     def fahrenheitToCelsius(fahrenheit: Temperature): Temperature = (fahrenheit-32)/1.8
 
-    val (temperaturesObservable, temperaturesFileHandle) = filenameToObservableAndHanlde(temperaturesFile)
+    val (temperaturesObservable, temperaturesFileHandle) = filenameToObservableAndHandle(temperaturesFile)
 
-    val (stationsObservable, stationsFileHandle) = filenameToObservableAndHanlde(stationsFile)
+    val (stationsObservable, stationsFileHandle) = filenameToObservableAndHandle(stationsFile)
 
     val stationsMap: Map[(Stn, Wban), (Latitude, Longitude)] = Await.result(stationsObservable.filter{ line =>
       line.takeRight(2) != ",,"
     }.map{ line =>
-      val tmp = line.split(",", 4)
-      ((tmp(0), tmp(1)),(toDoubleDefault(tmp(2), 0), toDoubleDefault(tmp(3), 0)))
+      val tmp = line.split(",", 4).toSeq
+      val result = ((tmp.head, tmp(1)),(toDoubleDefault(tmp(2), 0), toDoubleDefault(tmp(3), 0)))
+      //println(s"line = $line , tmp = ${tmp.toString} , result = $result")
+      result
     }.toListL.runAsync, 1.minute).toMap
+    stationsMap.foreach(println)
+    //throw new Error
 
     val r = Await.result(temperaturesObservable.map { temperaturesLine =>
       val tmpA = temperaturesLine.split(",")
       (tmpA(0), tmpA(1), tmpA(2).toInt, tmpA(3).toInt, tmpA(4).toDouble)
-    }.filter { tuple => stationsMap.isDefinedAt((tuple._1, tuple._2))
+    }.filter { tuple => stationsMap.isDefinedAt((tuple._1, tuple._2)) && (tuple._5 < 999)
     }.map{ tuple =>
       val (stn, wban, month, day, temperature) = tuple
       val tmpB = stationsMap((stn, wban))
@@ -75,8 +79,9 @@ object Extraction {
         acc + newTuple
       }
     }.map{taskMap => taskMap.map { tuple =>
+      val loc = tuple._1
       val temperatureTuple = tuple._2
-      (tuple._1, temperatureTuple._1 / temperatureTuple._2)
+      (Location(loc.lat.toInt, loc.lon.toInt), temperatureTuple._1 / temperatureTuple._2)
     }}.runAsync, 5.minutes)
   }
 
