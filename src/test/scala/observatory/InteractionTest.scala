@@ -14,8 +14,8 @@ class InteractionTest extends FunSuite with Checkers {
   test("[#3 - Interactive visualization] tileLocation must return the corresponding latitude and longitude, given some Web Mercator coordinates") {
     val loc = tileLocation(10, 512, 384) // Shows somewhere NW of Valencia, Spain, the top-left GPS coordinates should be on Valderrobres
     //println(loc)
-    assert(loc.lat == 40)
-    assert(loc.lon == 0)
+    assert(loc.lat.toInt == 40)
+    assert(loc.lon.toInt == 0)
   }
   /*
   * [Test Description] [#3 - Interactive visualization] tileLocation must return the corresponding latitude and longitude, given some Web Mercator coordinates
