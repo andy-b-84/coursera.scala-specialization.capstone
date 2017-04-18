@@ -5,6 +5,7 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.Checkers
 import Visualization._
+import observatory.Test._
 
 @RunWith(classOf[JUnitRunner])
 class VisualizationTest extends FunSuite with Checkers {
@@ -50,13 +51,6 @@ class VisualizationTest extends FunSuite with Checkers {
   }
 
   test("[#2 - Raw data display] visualize") {
-    val distrib = Map(
-      Location(-5,-5) -> -10.0,
-      Location(5,-5) -> 10.0,
-      Location(5,5) -> 20.0,
-      Location(-5,5) -> 30.0
-    )
-
     val predictedTemperature1 = predictTemperature(distrib, Location(0,-5))
     val predictedTemperature2 = predictTemperature(distrib, Location(5,0))
     val predictedTemperature3 = predictTemperature(distrib, Location(0,5))
@@ -75,38 +69,5 @@ class VisualizationTest extends FunSuite with Checkers {
     assert(predictedTemperature5 < 13)
 
   }
-
-/*
-[Test Description] [#2 - Raw data display] visualize
-[Observed Error] ExecutionException was thrown during property evaluation.
-  Message: Boxed Error
-  Occurred when passed generated values (
-    arg0 = 19.677803706030716,
-    arg1 = 71.73764235976873
-  )
-[Lost Points] 5
-
-[Test Description] [#2 - Raw data display] visualize
-[Observed Error] IllegalArgumentException was thrown during property evaluation.
-  Message: requirement failed
-  Occurred when passed generated values (
-    arg0 = 0.0,
-    arg1 = -48.36540540380187
-  )
-[Lost Points] 5
-
-[Test Description] [#2 - Raw data display] visualize
-[Observed Error] GeneratorDrivenPropertyCheckFailedException was thrown during property evaluation.
- (VisualizationTest.scala:136)
-  Falsified after 0 successful property evaluations.
-  Location: (VisualizationTest.scala:136)
-  Occurred when passed generated values (
-    arg0 = 14.013358656832835,
-    arg1 = -100.0
-  )
-  Label of failing property:
-    Incorrect computed color at Location(90.0,-180.0): Color(23,0,232). Expected to be closer to Color(255,0,0) than Color(0,0,255)
-[Lost Points] 5
-*/
 
 }
