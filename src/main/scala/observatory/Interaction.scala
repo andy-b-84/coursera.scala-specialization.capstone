@@ -32,27 +32,31 @@ object Interaction {
     val sortedColors = colors.toList.sortBy(_._1)
 
     val topLeftCorner = tileLocation(zoom, x, y)
-    var maxLon = topLeftCorner.lon
-    var maxLat = topLeftCorner.lat
+   // println(s"[Interaction.tile] topLeftCorner = $topLeftCorner")
+    //var maxLon = topLeftCorner.lon
+    //var minLat = topLeftCorner.lat
 
     val zoomPower = Math.pow(2, zoom)
 
     val colorsA = Seq.range(0, 256*256).par.map{ arrayIndex =>
-      val xTile = (arrayIndex % 256).toDouble
-      val yTile = (arrayIndex - x).toDouble / 256
+      val xTile = arrayIndex % 256
+      val yTile = (arrayIndex - x) / 256
 
-      val lon = topLeftCorner.lon + (xTile/zoomPower)
-      val lat = topLeftCorner.lat + (yTile/zoomPower)
+      val lon = topLeftCorner.lon + (xTile.toDouble/zoomPower)
+      val lat = topLeftCorner.lat - (yTile.toDouble/zoomPower)
 
-      if (lon > maxLon) maxLon = lon
-      if (lat > maxLat) maxLat = lat
+      //if (lon > maxLon) maxLon = lon
+      //if (lat < minLat) minLat = lat
 
-      val color = interpolateColor(sortedColors, predictTemperature(temperatures, Location(lat.toDouble, lon.toDouble)))
+      val predictedTemperature = predictTemperature(temperatures, Location(lat, lon))
+
+      val color = interpolateColor(sortedColors, predictedTemperature)
+      //println(s"[Interaction.tile] (xTile, yTile) = ($xTile, $yTile),\t(lat, lon) = ($lat, $lon),\tpredictedTemperature = $predictedTemperature,\tcolor=$color")
 
       Pixel(color.red, color.green, color.blue, 127)
     }.toArray
 
-    println(s"square : minLon = ${topLeftCorner.lon}, minLat = ${topLeftCorner.lat}. maxLon = $maxLon, maxLat = $maxLat")
+    //println(s"[Interaction.tile] square : minLon = ${topLeftCorner.lon}, minLat = $minLat. maxLon = $maxLon, maxLat = ${topLeftCorner.lat}")
 
     Image(256, 256, colorsA)
   }

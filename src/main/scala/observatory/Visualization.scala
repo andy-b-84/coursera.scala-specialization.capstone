@@ -14,7 +14,7 @@ object Visualization {
     * @return The predicted temperature at `location`
     */
   def predictTemperature(temperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
-    val distancePower = 10
+    val distancePower = 5
 
     def greatCircleDistanceAngle(location1: Location, location2: Location): Angle = {
       val phi1 = Math.toRadians(location1.lat)
@@ -24,9 +24,20 @@ object Visualization {
 
       val deltaLambda = Math.abs(lambda1 - lambda2)
 
-      val result = Math.acos(
-        ( Math.sin(phi1) * Math.sin(phi2) ) +
-        ( Math.cos(phi1) * Math.cos(phi2) * Math.cos(deltaLambda) )
+      val result = Math.atan2(
+        Math.sqrt(
+          Math.pow(
+            Math.cos(phi2) * Math.sin(deltaLambda)
+            , 2
+          ) +
+          Math.pow (
+            (Math.cos(phi1)*Math.sin(phi2)) -
+            (Math.sin(phi1)*Math.cos(phi2)*Math.cos(deltaLambda))
+            , 2
+          )
+        ),
+        (Math.sin(phi1)*Math.sin(phi2)) +
+        (Math.cos(phi1)*Math.cos(phi2)*Math.cos(deltaLambda))
       )
       if (result.isNaN) {
         //Math.acos has results for angles between -pi and pi, both excluded, thus returns NaN if one tries to calculate
@@ -37,16 +48,23 @@ object Visualization {
     }
 
     val temperaturesMap = temperatures.toMap
-    if (temperaturesMap.isDefinedAt(location)) temperaturesMap(location)
+    if (temperaturesMap.isDefinedAt(location)) {
+      //println(s"[Visualization.predictTemperature] found t° for $location")
+      temperaturesMap(location)
+    }
     else {
-      val set = temperaturesMap.map{ tuple => (tuple._1, (greatCircleDistanceAngle(location, tuple._1)*6371000, tuple._2)) }
-      val result = set.aggregate(0:Temperature)((acc, tuple) => {
+      val set = temperaturesMap.map{ tuple => (tuple._1, (greatCircleDistanceAngle(location, tuple._1), tuple._2)) }
+      //var debug = ""
+      val result = set.aggregate(0.0:Temperature)((acc, tuple) => {
         val secondTuple = tuple._2
-        acc + (secondTuple._2/Math.pow(secondTuple._1, distancePower))
+        val r = acc + (secondTuple._2/Math.pow(secondTuple._1, distancePower))
+        //debug = debug + s"[Visualization.predictTemperature] for location $location : (acc, tuple) = ($acc, $tuple), newAcc = $r\n"
+        r
       }, _+_) /
-        set.aggregate(0:Temperature)((acc, tuple) => {acc + (1/Math.pow(tuple._2._1, distancePower))}, _+_)
+        set.aggregate(0.0:Temperature)((acc, tuple) => {acc + (1/Math.pow(tuple._2._1, distancePower))}, _+_)
 
-      //println(s"location = $location , result = $result")
+      //println(debug)
+      //println(s"[Visualization.predictTemperature] location = $location , result = $result")
 
       result
     }

@@ -22,15 +22,23 @@ class InteractionTest extends FunSuite with Checkers {
 
   test("[#3 - Interactive visualization] tile pixel colors must be consistent with the given located temperatures and color scale") {
     val image = tile(Map(
-      Location(0.0, 40.979898069620134) -> 10.0,
-      Location(0.0, 41.22794112992287) -> 20.0,
-      Location(0.2490234375, 40.979898069620134) -> 30.0,
-      Location(0.2490234375, 41.22794112992287) -> 40.0
-    ), scale, 10, 512, 384)
+      Location(36.995523069620134, 0.0) -> 10.0,
+      Location(40.979898069620134, 0.0) -> 20.0,
+      Location(36.995523069620134, 3.984375) -> 30.0,
+      Location(40.979898069620134, 3.984375) -> 40.0
+    ), Map(
+      10.0 -> Color(0, 0, 255),
+      20.0 -> Color(0, 255, 255),
+      30.0 -> Color(255, 255, 0),
+      40.0 -> Color(255, 0, 0)
+    ), 6, 32, 24)
 
-    image.output(new java.io.File(s"target/test.png"))
+    //image.output(new java.io.File(s"target/test.png"))
 
-    assert(image.color(0,0) == RGBColor(255,222,0,127))
+    assert(image.color(0,0) == RGBColor(0,255,255,127))
+    assert(image.color(0,255) == RGBColor(0,0,255,127))
+    assert(image.color(255,255) == RGBColor(255,255,0,127))
+    assert(image.color(255,0) == RGBColor(255,0,0,127))
   }
   /*
   * [Test Description] [#3 - Interactive visualization] tile must be consistent accross zoom levels
