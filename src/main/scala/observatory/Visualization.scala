@@ -58,7 +58,8 @@ object Visualization {
       val result = set.aggregate(0.0:Temperature)((acc, tuple) => {
         val secondTuple = tuple._2
         val r = acc + (secondTuple._2/Math.pow(secondTuple._1, distancePower))
-        //debug = debug + s"[Visualization.predictTemperature] for location $location : (acc, tuple) = ($acc, $tuple), newAcc = $r\n"
+        //debug = debug + s"[Visualization.predictTemperature] for location $location : (acc, tuple) = " +
+        // ($acc, $tuple), newAcc = $r\n"
         r
       }, _+_) /
         set.aggregate(0.0:Temperature)((acc, tuple) => {acc + (1/Math.pow(tuple._2._1, distancePower))}, _+_)
