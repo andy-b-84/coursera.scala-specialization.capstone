@@ -16,14 +16,13 @@ object Interaction {
     */
   def tileLocation(zoom: Int, x: Int, y: Int): Location = {
     val lon = ( ( x * 360.0 ) / Math.pow(2.0, zoom) ) - 180
-    val latUnbound = Math.toDegrees(
+    val lat = Math.toDegrees(
       Math.atan(
         Math.sinh(
           Math.PI - ( ( 2.0 * Math.PI * y ) / Math.pow(2.0, zoom) )
         )
       )
     )
-    val lat = if (latUnbound < -85.0511) -85.0511 else if (latUnbound > 85.0511) 85.0511 else latUnbound
     Location(lat, lon)
   }
 
@@ -39,9 +38,12 @@ object Interaction {
     val sortedColors = colors.toList.sortBy(_._1)
 
     val topLeftCorner = tileLocation(zoom, x, y)
-   // println(s"[Interaction.tile] topLeftCorner = $topLeftCorner")
-    //var maxLon = topLeftCorner.lon
-    //var minLat = topLeftCorner.lat
+    val minLon = topLeftCorner.lon
+    val maxLat = topLeftCorner.lat
+
+    val nextTile = tileLocation(zoom, x+1, y+1)
+    val maxLon = nextTile.lon
+    val minLat = nextTile.lat
 
     val zoomPower = Math.pow(2, zoom)
 
@@ -49,23 +51,15 @@ object Interaction {
       val xTile = arrayIndex % 256
       val yTile = (arrayIndex - x) / 256
 
-      val lon = topLeftCorner.lon + (xTile.toDouble/zoomPower)
-      val lat = topLeftCorner.lat - (yTile.toDouble/zoomPower)
-
-      //if (lon > maxLon) maxLon = lon
-      //if (lat < minLat) minLat = lat
+      val lon = minLon + ( ( maxLon - minLon ) * ( xTile.toDouble / 256.0 ) )
+      val lat = maxLat - ( ( maxLat - minLat ) * ( yTile.toDouble / 256.0 ) )
 
       val predictedTemperature = predictTemperature(temperatures, Location(lat, lon))
 
       val color = interpolateColor(sortedColors, predictedTemperature)
-      //println(s"[Interaction.tile] (xTile, yTile) = ($xTile, $yTile),\t(lat, lon) = ($lat, $lon)," +
-      // "\tpredictedTemperature = $predictedTemperature,\tcolor=$color")
 
       Pixel(color.red, color.green, color.blue, 127)
     }.toArray
-
-    //println(s"[Interaction.tile] square : minLon = ${topLeftCorner.lon}, minLat = $minLat. maxLon = $maxLon, " +
-    // "maxLat = ${topLeftCorner.lat}")
 
     Image(256, 256, colorsA)
   }
