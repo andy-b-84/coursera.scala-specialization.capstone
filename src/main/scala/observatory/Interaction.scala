@@ -37,24 +37,16 @@ object Interaction {
   def tile(temperatures: Iterable[(Location, Double)], colors: Iterable[(Double, Color)], zoom: Int, x: Int, y: Int): Image = {
     val sortedColors = colors.toList.sortBy(_._1)
 
-    val topLeftCorner = tileLocation(zoom, x, y)
-    val minLon = topLeftCorner.lon
-    val maxLat = topLeftCorner.lat
-
-    val nextTile = tileLocation(zoom, x+1, y+1)
-    val maxLon = nextTile.lon
-    val minLat = nextTile.lat
-
-    val zoomPower = Math.pow(2, zoom)
+    val xTileStart = (x*Math.pow(2, 9)).toInt
+    val yTileStart = (y*Math.pow(2, 9)).toInt
 
     val colorsA = Seq.range(0, 256*256).par.map{ arrayIndex =>
       val xTile = arrayIndex % 256
       val yTile = (arrayIndex - x) / 256
 
-      val lon = minLon + ( ( maxLon - minLon ) * ( (xTile.toDouble+0.5) / 256.0 ) )
-      val lat = maxLat - ( ( maxLat - minLat ) * ( (yTile.toDouble-0.5) / 256.0 ) )
+      val location = tileLocation(zoom+9, xTileStart + (2*xTile) + 1, yTileStart + (2*yTile) + 1)
 
-      val predictedTemperature = predictTemperature(temperatures, Location(lat, lon))
+      val predictedTemperature = predictTemperature(temperatures, location)
 
       val color = interpolateColor(sortedColors, predictedTemperature)
 

@@ -9,11 +9,13 @@ object Main extends App {
   printlnTime("start")
   val averages = locationYearlyAverageRecords(locateTemperatures(year, "/stations.csv", s"/$year.csv"))
   printlnTime("averages calculated")
-  val image = visualize(averages, scale)
-  printlnTime("image filled")
-  image.output(new java.io.File(s"target/$year.png"))
-  printlnTime("image written")
+  //val image = visualize(averages, scale)
+  //printlnTime("image filled")
+  //image.output(new java.io.File(s"target/$year.png"))
+  //printlnTime("image written")
 
   val imageMercator = tile(averages, scale, 0, 0, 0)
+  printlnTime("image filled")
   imageMercator.output(new java.io.File(s"target/$year.mercator.png"))
+  printlnTime("image written")
 }
