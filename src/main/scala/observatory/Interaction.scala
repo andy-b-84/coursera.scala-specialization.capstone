@@ -45,16 +45,14 @@ object Interaction {
     val maxLon = nextTile.lon
     val minLat = nextTile.lat
 
-    println(s"(minLon, maxLon, minLat, maxLat) = ($minLon, $maxLon, $minLat, $maxLat)")
-
     val zoomPower = Math.pow(2, zoom)
 
     val colorsA = Seq.range(0, 256*256).par.map{ arrayIndex =>
       val xTile = arrayIndex % 256
       val yTile = (arrayIndex - x) / 256
 
-      val lon = minLon + ( ( maxLon - minLon ) * ( xTile.toDouble / 256.0 ) )
-      val lat = maxLat - ( ( maxLat - minLat ) * ( yTile.toDouble / 256.0 ) )
+      val lon = minLon + ( ( maxLon - minLon ) * ( (xTile.toDouble+0.5) / 256.0 ) )
+      val lat = maxLat - ( ( maxLat - minLat ) * ( (yTile.toDouble+0.5) / 256.0 ) )
 
       val predictedTemperature = predictTemperature(temperatures, Location(lat, lon))
 
