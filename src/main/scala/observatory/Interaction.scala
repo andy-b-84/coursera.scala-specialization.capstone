@@ -15,8 +15,15 @@ object Interaction {
     * @return The latitude and longitude of the top-left corner of the tile, as per http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
     */
   def tileLocation(zoom: Int, x: Int, y: Int): Location = {
-    val lon = (x / Math.pow(2.0, zoom) * 360.0 - 180)
-    val lat = Math.toDegrees(Math.atan(Math.sinh(Math.PI - (2.0 * Math.PI * y) / Math.pow(2.0, zoom))))
+    val lon = ( ( x * 360.0 ) / Math.pow(2.0, zoom) ) - 180
+    val latUnbound = Math.toDegrees(
+      Math.atan(
+        Math.sinh(
+          Math.PI - ( ( 2.0 * Math.PI * y ) / Math.pow(2.0, zoom) )
+        )
+      )
+    )
+    val lat = if (latUnbound < -85.0511) -85.0511 else if (latUnbound > 85.0511) 85.0511 else latUnbound
     Location(lat, lon)
   }
 
@@ -51,12 +58,14 @@ object Interaction {
       val predictedTemperature = predictTemperature(temperatures, Location(lat, lon))
 
       val color = interpolateColor(sortedColors, predictedTemperature)
-      //println(s"[Interaction.tile] (xTile, yTile) = ($xTile, $yTile),\t(lat, lon) = ($lat, $lon),\tpredictedTemperature = $predictedTemperature,\tcolor=$color")
+      //println(s"[Interaction.tile] (xTile, yTile) = ($xTile, $yTile),\t(lat, lon) = ($lat, $lon)," +
+      // "\tpredictedTemperature = $predictedTemperature,\tcolor=$color")
 
       Pixel(color.red, color.green, color.blue, 127)
     }.toArray
 
-    //println(s"[Interaction.tile] square : minLon = ${topLeftCorner.lon}, minLat = $minLat. maxLon = $maxLon, maxLat = ${topLeftCorner.lat}")
+    //println(s"[Interaction.tile] square : minLon = ${topLeftCorner.lon}, minLat = $minLat. maxLon = $maxLon, " +
+    // "maxLat = ${topLeftCorner.lat}")
 
     Image(256, 256, colorsA)
   }
