@@ -45,6 +45,8 @@ object Interaction {
     val maxLon = nextTile.lon
     val minLat = nextTile.lat
 
+    println(s"(minLon, maxLon, minLat, maxLat) = ($minLon, $maxLon, $minLat, $maxLat)")
+
     val zoomPower = Math.pow(2, zoom)
 
     val colorsA = Seq.range(0, 256*256).par.map{ arrayIndex =>
