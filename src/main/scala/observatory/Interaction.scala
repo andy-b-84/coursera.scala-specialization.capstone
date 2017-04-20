@@ -52,7 +52,7 @@ object Interaction {
       val yTile = (arrayIndex - x) / 256
 
       val lon = minLon + ( ( maxLon - minLon ) * ( (xTile.toDouble+0.5) / 256.0 ) )
-      val lat = maxLat - ( ( maxLat - minLat ) * ( (yTile.toDouble+0.5) / 256.0 ) )
+      val lat = maxLat - ( ( maxLat - minLat ) * ( (yTile.toDouble-0.5) / 256.0 ) )
 
       val predictedTemperature = predictTemperature(temperatures, Location(lat, lon))
 

@@ -48,8 +48,9 @@ class InteractionTest extends FunSuite with Checkers {
     //), 8, 0, 147)
     //), 9, 0, 295)
     ), 10, 0, 591)
+    //), 11, 1, 1182)
 
-    image.output(new java.io.File(s"target/test.png"))
+    //image.output(new java.io.File(s"target/test2.png"))
 
     assert(image.color(0,0) == RGBColor(0,0,255,127))
     assert(image.color(255,0) == RGBColor(0,255,255,127))
