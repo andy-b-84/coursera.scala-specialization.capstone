@@ -64,10 +64,10 @@ class InteractionTest extends FunSuite with Checkers {
   Falsified after 0 successful property evaluations.
   Location: (InteractionTest.scala:34)
   Occurred when passed generated values (
-    arg0 = false
+    arg0 = true
   )
   Label of failing property:
-    Incorrect computed color at Location(-27.05912578437406,-180.0): Color(187,0,68). Expected to be closer to Color(0,0,255) than Color(255,0,0)
+    Incorrect computed color at Location(-27.05912578437406,-178.59375): Color(126,0,129). Expected to be closer to Color(255,0,0) than Color(0,0,255)
 [Lost Points] 5
   *
   * [[Test Description] [#3 - Interactive visualization] generateTiles covers all the expected tiles

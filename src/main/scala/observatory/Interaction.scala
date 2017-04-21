@@ -67,7 +67,14 @@ object Interaction {
     yearlyData: Iterable[(Int, Data)],
     generateImage: (Int, Int, Int, Int, Data) => Unit
   ): Unit = {
-    ???
+    for {
+      (year, data) <- yearlyData
+      zoom <- Seq.range(0, 4)
+      max = Math.pow(2, zoom).toInt
+      x <- Seq.range(0, max)
+      y <- Seq.range(0, max)
+    } yield generateImage(year, zoom, x, y, data)
+    ()
   }
 
 }
