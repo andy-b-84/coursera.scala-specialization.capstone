@@ -17,6 +17,8 @@ package object observatory {
   type Temperature = Double
   type Angle = Double
 
+  type Temperatures = Iterable[(Location, Temperature)]
+
   type Size = Long
 
   type Stn = String

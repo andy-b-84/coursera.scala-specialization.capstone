@@ -68,7 +68,7 @@ object Extraction {
     * @param records A sequence containing triplets (date, location, temperature)
     * @return A sequence containing, for each location, the average temperature over the year.
     */
-  def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Temperature)]): Iterable[(Location, Temperature)] = {
+  def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Temperature)]): Temperatures = {
     Await.result(Observable.fromIterable(records).foldLeftL(Map[Location, (Temperature, Size)]()){ (acc, currentTuple) =>
       if (acc.isDefinedAt(currentTuple._2)) {
         val newTemperature = currentTuple._3 + acc(currentTuple._2)._1

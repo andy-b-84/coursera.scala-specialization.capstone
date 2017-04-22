@@ -1,8 +1,12 @@
 package observatory
 
 import com.sksamuel.scrimage.RGBColor
+import Math._
 
-case class Location(lat: Double, lon: Double)
+case class Location(lat: Angle, lon: Angle) {
+  lazy val latRadians: Angle = toRadians(lat)
+  lazy val lonRadians: Angle = toRadians(lon)
+}
 
 case class Color(red: Int, green: Int, blue: Int) {
   def pixel(alpha: Int = 255) = RGBColor(red, green, blue, alpha).toPixel

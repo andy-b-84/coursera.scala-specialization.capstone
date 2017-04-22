@@ -2,6 +2,7 @@ package observatory
 
 import com.sksamuel.scrimage.{Image, Pixel}
 import scala.language.postfixOps
+import Math._
 
 /**
   * 2nd milestone: basic visualization
@@ -13,38 +14,27 @@ object Visualization {
     * @param location Location where to predict the temperature
     * @return The predicted temperature at `location`
     */
-  def predictTemperature(temperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
+  def predictTemperature(temperatures: Temperatures, location: Location): Temperature = {
     val distancePower = 5
 
     def greatCircleDistanceAngle(location1: Location, location2: Location): Angle = {
-      val phi1 = Math.toRadians(location1.lat)
-      val lambda1 = Math.toRadians(location1.lon)
-      val phi2 = Math.toRadians(location2.lat)
-      val lambda2 = Math.toRadians(location2.lon)
+      val phi1 = location1.latRadians
+      val lambda1 = location1.lonRadians
+      val phi2 = location2.latRadians
+      val lambda2 = location2.lonRadians
 
-      val deltaLambda = Math.abs(lambda1 - lambda2)
+      val deltaLambda = abs(lambda1 - lambda2)
 
-      val result = Math.atan2(
-        Math.sqrt(
-          Math.pow(
-            Math.cos(phi2) * Math.sin(deltaLambda)
-            , 2
-          ) +
-          Math.pow (
-            (Math.cos(phi1)*Math.sin(phi2)) -
-            (Math.sin(phi1)*Math.cos(phi2)*Math.cos(deltaLambda))
-            , 2
-          )
+      val result = atan2(
+        sqrt(
+          pow ( cos(phi2) * sin(deltaLambda), 2 ) +
+          pow ( ( cos(phi1) * sin(phi2) ) - ( sin(phi1) * cos(phi2) * cos(deltaLambda) ), 2 )
         ),
-        (Math.sin(phi1)*Math.sin(phi2)) +
-        (Math.cos(phi1)*Math.cos(phi2)*Math.cos(deltaLambda))
+        ( sin (phi1) * sin(phi2) ) + ( cos(phi1) * cos(phi2) * cos(deltaLambda) )
       )
-      if (result.isNaN) {
-        //Math.acos has results for angles between -pi and pi, both excluded, thus returns NaN if one tries to calculate
-        // pi or -pi. Thus this result here.
-        Math.PI
-      }
-      else result
+      //acos has results for angles between -pi and pi, both excluded, thus returns NaN if one tries to calculate
+      // pi or -pi. Thus this result here.
+      if (result.isNaN) PI else result
     }
 
     val temperaturesMap = temperatures.toMap
@@ -57,12 +47,12 @@ object Visualization {
       //var debug = ""
       val result = set.aggregate(0.0:Temperature)((acc, tuple) => {
         val secondTuple = tuple._2
-        val r = acc + (secondTuple._2/Math.pow(secondTuple._1, distancePower))
+        val r = acc + (secondTuple._2/pow(secondTuple._1, distancePower))
         //debug = debug + s"[Visualization.predictTemperature] for location $location : (acc, tuple) = " +
         // ($acc, $tuple), newAcc = $r\n"
         r
       }, _+_) /
-        set.aggregate(0.0:Temperature)((acc, tuple) => {acc + (1/Math.pow(tuple._2._1, distancePower))}, _+_)
+        set.aggregate(0.0:Temperature)((acc, tuple) => {acc + (1/pow(tuple._2._1, distancePower))}, _+_)
 
       //println(debug)
       //println(s"[Visualization.predictTemperature] location = $location , result = $result")
@@ -81,7 +71,7 @@ object Visualization {
     if (pointsMap.isDefinedAt(value)) pointsMap(value)
     else {
       def interpolateChannel(cMin: Channel, cMax: Channel, delta: Double): Channel =
-        cMin + Math.round((cMax-cMin) * delta).toInt
+        cMin + round((cMax-cMin) * delta).toInt
 
       def interpolate(min:(Temperature, Color), max:(Temperature, Color)): Color = {
         val delta = (value - min._1) / (max._1 - min._1)
@@ -109,7 +99,7 @@ object Visualization {
     * @param colors Color scale
     * @return A 360×180 image where each pixel shows the predicted temperature at its location
     */
-  def visualize(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)]): Image = {
+  def visualize(temperatures: Temperatures, colors: Iterable[(Temperature, Color)]): Image = {
     val sortedColors = colors.toList.sortBy(_._1)
 
     val colorsA = Seq.range(0, 360*180).par.map { arrayIndex =>

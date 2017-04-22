@@ -19,7 +19,7 @@ object Main extends App {
   imageMercator.output(new java.io.File(s"target/$year.mercator.png"))
   printlnTime("image written")*/
 
-  def generateImage(year: Int, zoom: Int, x: Int, y: Int, temperatures: Iterable[(Location, Temperature)]): Unit = {
+  def generateImage(year: Int, zoom: Int, x: Int, y: Int, temperatures: Temperatures): Unit = {
     new java.io.File(s"target/temperatures/$year/$zoom").mkdirs()
     val image = tile(temperatures, scale, zoom, x, y)
     printlnTime(s"year $year zoom $zoom x $x y $y : image filled")
