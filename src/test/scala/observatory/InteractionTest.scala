@@ -30,7 +30,7 @@ class InteractionTest extends FunSuite with Checkers {
 
     //image.output(new java.io.File(s"target/test.png"))
 
-    assert(image.color(0,0) == RGBColor(127,0,128,127))
+    assert(image.color(0,0) == RGBColor(128,0,128,127))
   }
 
   test("[#3 - Interactive visualization] tile pixel colors must be consistent with the given located temperatures and color scale") {
@@ -58,21 +58,8 @@ class InteractionTest extends FunSuite with Checkers {
     assert(image.color(0,255) == RGBColor(255,0,0,127))
   }
   /*
-  * [Test Description] [#3 - Interactive visualization] tile pixel colors must be consistent with the given located temperatures and color scale
-[Observed Error] GeneratorDrivenPropertyCheckFailedException was thrown during property evaluation.
- (InteractionTest.scala:34)
-  Falsified after 0 successful property evaluations.
-  Location: (InteractionTest.scala:34)
-  Occurred when passed generated values (
-    arg0 = true
-  )
-  Label of failing property:
-    Incorrect computed color at Location(-27.05912578437406,-178.59375): Color(126,0,129). Expected to be closer to Color(255,0,0) than Color(0,0,255)
-[Lost Points] 5
-  *
-  * [[Test Description] [#3 - Interactive visualization] generateTiles covers all the expected tiles
-[Observed Error] an implementation is missing
-[exception was thrown] detailed error message in debug output section below
+  * [Test Description] [#3 - Interactive visualization] generateTiles covers all the expected tiles
+[Observed Error] noMissingTiles was false Missing tiles: Set((1932,(3,1,6)), (1997,(3,3,3)), (1997,(1,1,0)), (1924,(3,2,0)), (1919,(3,5,5)), (1927,(3,7,6)), (1978,(3,4,6)), (1914,(1,0,1)), (1956,(3,1,5)), (1987,(3,7,4)))
 [Lost Points] 3
   * */
 }
